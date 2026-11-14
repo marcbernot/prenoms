@@ -120,7 +120,8 @@ cmd = "rm -rf build/wheels && uv build --wheel --out-dir build/wheels"
 
 [feature.lite.tasks.build-lite]
 description = "Build the static JupyterLite site into _output/"
-cmd = "jupyter lite build --output-dir ../_output"
+# fix_lock.py: Pyodide hangs on dependency cycles in the lock (panel <-> panel-material-ui)
+cmd = "jupyter lite build --output-dir ../_output && python fix_lock.py ../_output/static/pyodide-lock/pyodide-lock.json"
 cwd = "lite"
 depends-on = ["wheel", "get-data"]
 
