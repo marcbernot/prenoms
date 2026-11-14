@@ -1,6 +1,9 @@
 {
   "jupyter-lite-schema-version": 0,
   "jupyter-config-data": {
-    "appName": "prenoms"
+    "appName": "prenoms",
+    "contentsStorageName": "prenoms-contents",
+    "settingsStorageName": "prenoms-settings",
+    "workspacesStorageName": "prenoms-workspaces"
   }
 }
