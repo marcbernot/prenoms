@@ -1,0 +1,23 @@
+# pixi
+.pixi/
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+# jupyter / jupyterlite
+.ipynb_checkpoints/
+_output/
+.jupyterlite.doit.db
+lite/.cache/
+# local data and experiments (data lives on Zenodo / releases, not in git)
+/scratch/
+/data/
+# data fetched from the GitHub release (pixi run get-data), never committed
+notebooks/*.pq
+# recipe sources, kept outside this repo
+/RECIPE.md
+/lite-recipe.zip

@@ -1,0 +1,11 @@
+{
+  "LiteBuildConfig": {
+    "contents": ["../notebooks"],
+    "no_sourcemaps": true
+  },
+  "PyodideLockAddon": {
+    "enabled": true,
+    "wheels": ["../build/wheels"],
+    "prefetch_extra": ["prenoms"]
+  }
+}

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prenoms"
+version = "0.0.1"
+description = "Explore the INSEE French first-names file (prénoms), locally and in JupyterLite"
+readme = "README.md"
+requires-python = ">=3.12"
+# license = "MIT"   # TODO pick one (SPDX id) and add a LICENSE file
+# These are what the browser gets: the PyodideLockAddon resolves them from the wheel's metadata.
+# Keep them in sync with [dependencies] in pixi.toml. Only pure-Python or Pyodide-built packages work here.
+dependencies = ["numpy", "pandas", "pyarrow", "hvplot", "panel"]
+
+[project.optional-dependencies]
+# Desktop-only extras (anything that can't run in Pyodide: pooch, h5py, dask, ...).
+# Import them inside functions, never at module top level, so `import prenoms` works in the browser.
+local = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prenoms"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

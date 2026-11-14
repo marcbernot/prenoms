@@ -1,0 +1,39 @@
+#:schema https://www.schemastore.org/prek.json
+# prek = fast, single-binary drop-in for pre-commit (https://prek.j178.dev).
+# `pixi run hooks` installs the git hook once per clone; `pixi run lint` runs everything.
+
+# Rust-native hooks shipped inside prek: no download, no Python env.
+[[repos]]
+repo = "builtin"
+hooks = [
+    { id = "trailing-whitespace" },
+    { id = "end-of-file-fixer" },
+    { id = "mixed-line-ending" },
+    { id = "check-yaml" },
+    { id = "check-toml" },
+    { id = "check-json" },
+    { id = "check-merge-conflict" },
+    { id = "check-case-conflict" },
+    { id = "detect-private-key" },
+    # Keeps data files out of git (put data on Zenodo/GitHub releases and fetch it).
+    { id = "check-added-large-files", args = ["--maxkb=1000"] },
+]
+
+# Strip notebook outputs and execution counts before every commit.
+[[repos]]
+repo = "https://github.com/kynan/nbstripout"
+rev = "0.9.1"
+hooks = [{ id = "nbstripout" }]
+
+# Lint + format .py and .ipynb.
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.17.5"
+hooks = [{ id = "ruff-check", args = ["--fix"] }, { id = "ruff-format" }]
+
+# Fail if pixi.lock is out of date with pixi.toml / pyproject.toml.
+[[repos]]
+repo = "local"
+hooks = [
+    { id = "pixi-lock-check", name = "pixi.lock is up to date", entry = "pixi lock --check", language = "system", files = "^(pixi\\.toml|pyproject\\.toml|pixi\\.lock)$", pass_filenames = false },
+]

@@ -1,0 +1,129 @@
+# One manifest, two environments:
+#   default  local work: notebooks, tests, hooks, GitHub setup   (pixi run lab / check / github-*)
+#   lite     builds the static JupyterLite site, nothing else     (pixi run build-lite / serve-lite)
+# Tasks that exist in only one environment run there automatically.
+# Rename: replace every "prenoms" in the repo (see RECIPE.md, step 1).
+
+[workspace]
+name = "prenoms"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]   # add osx-64 if you still need Intel Macs
+requires-pixi = ">=0.84"
+
+[environments]
+default = { features = ["data"] }
+lite = { features = ["lite", "data"], no-default-feature = true }
+
+# ================================================================ default environment
+[dependencies]
+# Same minor version as Pyodide in jupyterlite-pyodide-kernel 0.8.* (Pyodide 314 = Python 3.14),
+# so "works locally" and "works in the browser" mean the same language version.
+python = "3.14.*"
+# runtime (keep in sync with [project].dependencies in pyproject.toml; those go into the browser)
+numpy = "*"
+pandas = "*"
+hvplot = "*"
+panel = "*"
+pyarrow = "*"
+# local notebooks: free to add server-side lab extensions here (jupyterlab-git, lsp, jupytext...),
+# they never reach the Lite site.
+jupyterlab = ">=4.6"
+# dev
+pytest = "*"
+prek = "*"
+gh = "*"
+
+[pypi-dependencies]
+prenoms = { path = ".", editable = true }
+
+[tasks.lab]
+description = "Open JupyterLab on the notebooks folder"
+cmd = "jupyter lab --notebook-dir notebooks"
+
+[tasks.test]
+description = "Unit tests"
+cmd = "pytest -q"
+
+[tasks.test-nb]
+description = "Execute every notebook locally (outputs are not saved)"
+cmd = "jupyter execute notebooks/*.ipynb"
+depends-on = ["get-data"]
+
+[tasks.lint]
+description = "Run all prek hooks on all files (strips notebook outputs, ruff, ...)"
+cmd = "prek run --all-files"
+
+[tasks.check]
+description = "lint + test + test-nb (what CI runs)"
+depends-on = ["lint", "test", "test-nb"]
+
+[tasks.hooks]
+description = "Install the git pre-commit hook (once per clone)"
+cmd = "prek install"
+
+[tasks.hooks-update]
+description = "Bump hook revisions in prek.toml"
+cmd = "prek auto-update"
+
+# ---------------------------------------------------------------- GitHub (needs `pixi run gh auth login` once)
+# Pages needs a PUBLIC repo on free GitHub plans. Order: create+push, then enable Pages while the
+# first CI build is still running, so its deploy job finds Pages ready. If it lost the race: github-deploy.
+[tasks.github-init]
+description = "One-shot after the first commit: create the PUBLIC repo, push main, enable Pages (Actions)"
+cmd = "gh repo create $PIXI_WORKSPACE_NAME --public --source . --remote origin --push && pixi run github-pages"
+
+[tasks.github-pages]
+description = "Enable/repair Pages with source = GitHub Actions and set the repo homepage (idempotent)"
+cmd = """gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow --silent \
+|| gh api -X PUT repos/{owner}/{repo}/pages -f build_type=workflow --silent \
+&& gh repo edit --homepage $(gh api repos/{owner}/{repo}/pages --jq .html_url)"""
+
+[tasks.github-deploy]
+description = "Re-run the Pages workflow on main"
+cmd = "gh workflow run pages.yml --ref main"
+
+[tasks.github-site]
+description = "Print the Pages URL"
+cmd = "gh api repos/{owner}/{repo}/pages --jq .html_url"
+
+[tasks.upload-data]
+description = "(Re)upload notebooks/nat2020.pq to the 'data' GitHub release"
+cmd = "gh release upload data notebooks/nat2020.pq --clobber || gh release create data notebooks/nat2020.pq --title 'Data' --notes 'Data files fetched by pixi run get-data'"
+
+# ================================================================ data (both environments)
+# nat2020.pq (INSEE prénoms, 1.7 MB) lives in the "data" GitHub release, not in git. It is downloaded
+# next to the notebooks, so the same relative path works locally and in the Lite site (build-lite
+# copies notebooks/ into the site contents).
+[feature.data.tasks.get-data]
+description = "Download nat2020.pq from the GitHub release into notebooks/ (skipped if present)"
+cmd = """python -c "
+import os, urllib.request as u
+f = 'notebooks/nat2020.pq'
+os.path.exists(f) or u.urlretrieve('https://github.com/marcbernot/prenoms/releases/download/data/nat2020.pq', f)
+" """
+outputs = ["notebooks/nat2020.pq"]
+
+# ================================================================ lite environment
+# Only what the build needs. `jupyter lite build` copies every JupyterLab extension found in THIS
+# environment into the site, so what is listed here is exactly what ships to the browser.
+[feature.lite.dependencies]
+python = "3.14.*"                                # same as default and Pyodide; avoids brand-new Python surprises
+jupyterlite-core = "0.8.*"
+jupyterlite-pyodide-kernel-with-lock = "0.8.*"   # the kernel + uv + pyodide-lock (PyodideLockAddon)
+jupyter_server = "*"                             # used by the build to import the notebooks
+pyviz_comms = "*"                                # its lab extension lets Panel/HoloViews talk to JS in Lite
+# ipywidgets = "*"                               # add if notebooks use ipywidgets
+
+[feature.lite.tasks.wheel]
+description = "Build the package wheel that the Lite site bundles"
+cmd = "rm -rf build/wheels && uv build --wheel --out-dir build/wheels"
+
+[feature.lite.tasks.build-lite]
+description = "Build the static JupyterLite site into _output/"
+cmd = "jupyter lite build --output-dir ../_output"
+cwd = "lite"
+depends-on = ["wheel", "get-data"]
+
+[feature.lite.tasks.serve-lite]
+description = "Serve _output/ on http://localhost:8000 (run build-lite first)"
+cmd = "python -m http.server --directory _output 8000"
