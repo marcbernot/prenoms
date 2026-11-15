@@ -165,3 +165,31 @@ local is pinned down).
   remains.
 
 Retry command with the slimming config: `mkdir -p .pixi/tmp && TMPDIR=$PWD/.pixi/tmp pixi run build-lite`.
+
+## Third pass (2026-11-15): Parquet without pyarrow
+
+Asked: try fastparquet instead of pyarrow.
+
+- **fastparquet is not possible**: not built on emscripten-forge, and it has compiled (Cython) code,
+  so the `pip:` route (pure Python only) cannot install it. Pyodide's fastparquet wheel is for a
+  different Python/ABI.
+- **DuckDB works instead**: `python-duckdb` 1.4.5 is on emscripten-forge, with the Parquet reader
+  built in. `lite/environment.yml` now has `python-duckdb` in place of `pyarrow`.
+  - `duckdb.read_parquet("nat2020.pq").df()` returns the full table (667364 x 4).
+  - `duckdb.sql("select * from 'nat2020.pq'")` does *not* work: the `.pq` suffix is not recognised
+    (use `read_parquet(...)` or rename the file `.parquet`).
+  - Without pyarrow, pandas 3 strings are Python-backed and the `ArrowIndexError` is gone.
+- Side effects: environment 77 packages instead of 258, site 135 MB, build 3.3 min.
+- **Static hvPlot/Bokeh figures render**, and a Panel `Select` + bound plot render (checked on a
+  screenshot, headless Chromium).
+- **Still broken: widget -> Python.** Choosing another value in the `Select` does not update the
+  plot; the console shows the same `comm_open` pybind11 error from xeus-python 0.19. This is now
+  the only functional blocker (blocker 2 above); blocker 1 is solved by dropping pyarrow.
+
+Not done on this branch: `prenoms.load_nat2020` still calls `pd.read_parquet` (would need a DuckDB
+path in the browser, plus `duckdb` or pyarrow locally), and the tornado un-mocking is still done by
+hand in the first cell.
+
+Untested idea for the comm blocker: `pn.extension(comms="ipywidgets")` with `ipywidgets` +
+`jupyter_bokeh` in both the kernel environment and the lite build environment. ipywidgets comms are
+opened from the kernel side, which xeus-python handles, so this may avoid the failing path.

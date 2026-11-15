@@ -9,7 +9,7 @@ dependencies:
   - xeus-python
   - numpy
   - pandas
-  - pyarrow
+  - python-duckdb   # reads Parquet without pyarrow (fastparquet is not on emscripten-forge)
   - hvplot
   - panel
   - pip:
