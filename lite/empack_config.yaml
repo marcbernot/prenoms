@@ -1,0 +1,55 @@
+# Copy of empack's default config (jupyterlite-xeus replaces, not merges) + extra excludes.
+packages:
+  setuptools:
+    exclude_patterns:
+      - pattern: '**/_distutils_hack/**'
+      - pattern: '**/distutils-precedence.pth'
+      - pattern: '**/setuptools/**'
+      - pattern: '**/pkg_resources/_vendor/**'
+  zlib:
+    exclude_patterns:
+      - pattern: '**/so'
+  widgetsnbextension:
+    exclude_patterns:
+      - pattern: '**'
+  numpy:
+    exclude_patterns:
+    - pattern: '**/*.pyx'
+    - pattern: '**/*.pyc'
+    - pattern: '**/*.typed'
+    - pattern: '**/*.egg-info'
+default:
+  exclude_patterns:
+    # --- added for prenoms: build-time files that are useless in the browser (headers, static
+    # libs, cmake, source maps). Without these the kernel loads ~890 MB into browser memory.
+    - pattern: 'include/**'
+    - pattern: '**/*.a'
+    - pattern: 'lib/cmake/**'
+    - pattern: 'lib/pkgconfig/**'
+    - pattern: 'share/boost*/**'
+    - pattern: 'share/doc/**'
+    - pattern: 'share/man/**'
+    - pattern: '**/*.js.map'
+    - pattern: '**/*.h'
+    - pattern: '**/*.hpp'
+    # --- default empack patterns
+    - pattern: 'bin/**'
+    - pattern: '**/bin/**'
+    - pattern: 'tests/**'
+    - pattern: '**/tests/**'
+    - pattern: '**/*.ini'
+    - pattern: '**/*.exe'
+    - pattern: '**/*.c'
+    - pattern: '**/*.pxd'
+    - pattern: '**/*.pyx'
+    - pattern: '**/*.pyc'
+    - pattern: '**/*.typed'
+    - pattern: '**/*.egg-info'
+    - pattern: '**/site-packages/pip/_vendor/**'
+    - pattern: '**/idlelib/**'
+    - pattern: '**/ensurepip/**'
+    - pattern: 'Scripts/*'
+    # Excluding jupyter front-end and server extensions
+    - pattern: 'share/jupyter/nbextensions/**'
+    - pattern: 'share/jupyter/labextensions/**'
+    - pattern: 'etc/jupyter/nbconfig/**'

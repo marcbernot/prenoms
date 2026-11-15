@@ -1,9 +1,12 @@
 {
   "LiteBuildConfig": {
-    "contents": ["../notebooks"],
+    "contents": [
+      "../notebooks"
+    ],
     "no_sourcemaps": true
   },
   "XeusAddon": {
-    "mount_jupyterlite_content": true
+    "mount_jupyterlite_content": true,
+    "empack_config": "empack_config.yaml"
   }
 }
