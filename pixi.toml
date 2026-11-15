@@ -25,6 +25,7 @@ pandas = "*"
 hvplot = "*"
 panel = "*"
 pyarrow = "*"
+python-duckdb = "*"                   # the Parquet reader used in the browser (xeus); tested locally too
 # local notebooks: free to add server-side lab extensions here (jupyterlab-git, lsp, jupytext...),
 # they never reach the Lite site.
 jupyterlab = ">=4.6"
@@ -118,7 +119,8 @@ jupyter_bokeh = "*"                              # lab extension: Bokeh/Panel mo
 
 [feature.lite.tasks.build-lite]
 description = "Build the static JupyterLite site into _output/"
-cmd = "jupyter lite build --output-dir ../_output"
+# TMPDIR: micromamba unpacks the browser environment there; /tmp is often a small RAM disk
+cmd = "mkdir -p ../.pixi/tmp && TMPDIR=$PIXI_PROJECT_ROOT/.pixi/tmp jupyter lite build --output-dir ../_output && rm -rf ../.pixi/tmp"
 cwd = "lite"
 depends-on = ["get-data"]
 

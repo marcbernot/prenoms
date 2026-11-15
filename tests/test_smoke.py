@@ -23,3 +23,12 @@ def test_nat2020():
     df = prenoms.load_nat2020(NAT2020)
     assert list(df.columns) == ["sexe", "preusuel", "annais", "nombre"]
     assert df["annais"].min() == 1900 and df["annais"].max() == 2020
+
+
+@pytest.mark.skipif(not NAT2020.exists(), reason="run `pixi run get-data` first")
+def test_duckdb_reader_matches_pyarrow():
+    from pandas.testing import assert_frame_equal
+
+    from prenoms.data import _read_parquet
+
+    assert_frame_equal(_read_parquet(NAT2020, "duckdb"), _read_parquet(NAT2020, "pyarrow"))

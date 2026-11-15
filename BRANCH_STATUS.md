@@ -1,7 +1,7 @@
 # Branch `xeus`: status
 
-**Status: works with three workarounds (2026-11-15, see "Fourth pass" at the end); not yet wired into
-the package and notebook. Earlier sections are kept as history; the first assessment is partly wrong. Not pushed, not merged. `main` stays on the Pyodide kernel.**
+**Status: working (2026-11-15, see "Fifth pass" at the end): both notebooks run end to end on
+xeus-python, workarounds are inside the `prenoms` package. Not pushed, CI not tried. Earlier sections are kept as history; the first assessment is partly wrong. Not pushed, not merged. `main` stays on the Pyodide kernel.**
 
 Goal: replace the JupyterLite Pyodide kernel (`jupyterlite-pyodide-kernel-with-lock` + `PyodideLockAddon`)
 with the xeus-python kernel (`jupyterlite-xeus`), hoping for:
@@ -226,3 +226,36 @@ Result (headless Chromium, cells typed into a fresh kernel, real `nat2020.pq`):
 - Pin local Python to 3.13 if version parity matters (browser: Python 3.13.1, panel 1.8.10,
   bokeh 3.9.2, pandas 3.1.0, numpy 2.5.4).
 - Put `TMPDIR` in the `build-lite` task; check the build in CI.
+
+## Fifth pass (2026-11-15): workarounds wired in, real notebooks run end to end
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/prenoms/_runtime.py` | `IN_XEUS` flag (browser + `pyjs` present). On import in xeus, the placeholder `tornado` is removed (`_restore_real_tornado`). New `panel_extension()`: calls `pn.extension`, with `comms="ipywidgets"` in xeus, and returns `panel`. |
+| `src/prenoms/data.py` | `_read_parquet`: pyarrow when installed (local), DuckDB otherwise (xeus). `load_nat2020` uses it. |
+| `notebooks/*.ipynb` | `import prenoms` is now in the **first code cell, before hvplot/panel** (required in xeus); `pn = prenoms.panel_extension()` replaces `import panel as pn; pn.extension()`. Same notebook locally and in the browser. |
+| `tests/test_smoke.py` | new test: the DuckDB reader returns exactly the same frame as pyarrow. |
+| `pixi.toml` | `python-duckdb` in the default env (so that test runs); `build-lite` sets `TMPDIR` to `.pixi/tmp` itself and removes it afterwards. |
+
+### Checked
+
+- `pixi run check` passes locally (4 tests, both notebooks execute).
+- `pixi run build-lite` works without a manual `TMPDIR` (4 min, site 136 MB).
+- **Chromium (headless)**: `prenoms.ipynb` Run All, 6 cells, no error output, ~65 s; typing in the
+  autocomplete and picking CAMILLA updates `name.value` and redraws the plot (screenshot).
+  `getting_started.ipynb`: all cells, ~50 s; the `Select` updates Python.
+- **System Firefox 159 (headless, Selenium)**: `prenoms.ipynb` Run All ~80 s, no error output,
+  autocomplete -> CAMILLA redraws the plot (screenshot). **1 of 2 runs lost the browser** during
+  load, and Playwright's own Firefox build crashed once too: same low-memory behaviour as with the
+  Pyodide build on this 3.7 GB machine.
+
+### Not checked / open
+
+- CI and GitHub Pages (branch not pushed). The runner must reach prefix.dev.
+- A real, non-headless browser session.
+- The console still logs the `comm_open` pybind11 error from the pyviz extension (harmless).
+- Environment not optimised: Python 3.13.1 / panel 1.8.10 / bokeh 3.9.2 in the browser vs 3.14 /
+  1.10 / 3.10 locally; `pyproject.toml` still lists pyarrow (unused in the browser here, since the
+  browser environment comes from `lite/environment.yml`).
