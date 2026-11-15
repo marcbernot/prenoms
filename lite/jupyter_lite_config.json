@@ -3,9 +3,7 @@
     "contents": ["../notebooks"],
     "no_sourcemaps": true
   },
-  "PyodideLockAddon": {
-    "enabled": true,
-    "wheels": ["../build/wheels"],
-    "prefetch_extra": ["prenoms"]
+  "XeusAddon": {
+    "mount_jupyterlite_content": true
   }
 }

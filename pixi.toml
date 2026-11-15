@@ -109,21 +109,17 @@ outputs = ["notebooks/nat2020.pq"]
 [feature.lite.dependencies]
 python = "3.14.*"                                # same as default and Pyodide; avoids brand-new Python surprises
 jupyterlite-core = "0.8.*"
-jupyterlite-pyodide-kernel-with-lock = "0.8.*"   # the kernel + uv + pyodide-lock (PyodideLockAddon)
+jupyterlite-xeus = "6.*"                         # xeus-python kernel; env from lite/environment.yml (emscripten-forge)
+pip = "*"                                        # jupyterlite-xeus installs prenoms (pure Python) with pip
 jupyter_server = "*"                             # used by the build to import the notebooks
 pyviz_comms = "*"                                # its lab extension lets Panel/HoloViews talk to JS in Lite
 # ipywidgets = "*"                               # add if notebooks use ipywidgets
 
-[feature.lite.tasks.wheel]
-description = "Build the package wheel that the Lite site bundles"
-cmd = "rm -rf build/wheels && uv build --wheel --out-dir build/wheels"
-
 [feature.lite.tasks.build-lite]
 description = "Build the static JupyterLite site into _output/"
-# fix_lock.py: Pyodide hangs on dependency cycles in the lock (panel <-> panel-material-ui)
-cmd = "jupyter lite build --output-dir ../_output && python fix_lock.py ../_output/static/pyodide-lock/pyodide-lock.json"
+cmd = "jupyter lite build --output-dir ../_output"
 cwd = "lite"
-depends-on = ["wheel", "get-data"]
+depends-on = ["get-data"]
 
 [feature.lite.tasks.serve-lite]
 description = "Serve _output/ on http://localhost:8000 (run build-lite first)"

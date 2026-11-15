@@ -1,0 +1,17 @@
+# Browser (xeus-python) environment, resolved by micromamba at `pixi run build-lite`.
+# Packages come from emscripten-forge (compiled to WebAssembly) and conda-forge (noarch).
+# Keep in sync with [dependencies] in pixi.toml.
+name: prenoms
+channels:
+  - https://prefix.dev/emscripten-forge-4x
+  - https://prefix.dev/conda-forge
+dependencies:
+  - xeus-python
+  - numpy
+  - pandas
+  - pyarrow
+  - hvplot
+  - panel
+  - pip:
+      # this project, pure Python, installed with pip --no-deps (path relative to this file)
+      - ..
