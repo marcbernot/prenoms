@@ -12,6 +12,8 @@ dependencies:
   - python-duckdb   # reads Parquet without pyarrow (fastparquet is not on emscripten-forge)
   - hvplot
   - panel
+  - ipywidgets       # with jupyter_bokeh: Panel comms via ipywidgets (pn.extension(comms="ipywidgets"))
+  - jupyter_bokeh
   - pip:
       # this project, pure Python, installed with pip --no-deps (path relative to this file)
       - ..

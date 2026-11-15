@@ -113,7 +113,8 @@ jupyterlite-xeus = "6.*"                         # xeus-python kernel; env from 
 pip = "*"                                        # jupyterlite-xeus installs prenoms (pure Python) with pip
 jupyter_server = "*"                             # used by the build to import the notebooks
 pyviz_comms = "*"                                # its lab extension lets Panel/HoloViews talk to JS in Lite
-# ipywidgets = "*"                               # add if notebooks use ipywidgets
+ipywidgets = "*"                                 # lab extension for widgets
+jupyter_bokeh = "*"                              # lab extension: Bokeh/Panel models as ipywidgets
 
 [feature.lite.tasks.build-lite]
 description = "Build the static JupyterLite site into _output/"

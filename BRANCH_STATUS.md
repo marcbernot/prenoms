@@ -1,7 +1,7 @@
 # Branch `xeus`: status
 
-**Status: still parked after a second look (2026-11-15, see "Reassessment" at the end, which corrects
-several points of the first assessment). Not pushed, not merged. `main` stays on the Pyodide kernel.**
+**Status: works with three workarounds (2026-11-15, see "Fourth pass" at the end); not yet wired into
+the package and notebook. Earlier sections are kept as history; the first assessment is partly wrong. Not pushed, not merged. `main` stays on the Pyodide kernel.**
 
 Goal: replace the JupyterLite Pyodide kernel (`jupyterlite-pyodide-kernel-with-lock` + `PyodideLockAddon`)
 with the xeus-python kernel (`jupyterlite-xeus`), hoping for:
@@ -193,3 +193,36 @@ hand in the first cell.
 Untested idea for the comm blocker: `pn.extension(comms="ipywidgets")` with `ipywidgets` +
 `jupyter_bokeh` in both the kernel environment and the lite build environment. ipywidgets comms are
 opened from the kernel side, which xeus-python handles, so this may avoid the failing path.
+
+## Fourth pass (2026-11-15): Panel comms through ipywidgets -> it works
+
+Added `ipywidgets` + `jupyter_bokeh` to `lite/environment.yml` (kernel side) and to the pixi `lite`
+env (their lab extensions ship in the site), and called `pn.extension(comms="ipywidgets")`.
+
+Result (headless Chromium, cells typed into a fresh kernel, real `nat2020.pq`):
+
+- data loads through DuckDB (667364 rows), births-per-year chart renders,
+- a Panel `Select` + bound hvPlot renders, **and choosing another name updates both Python
+  (`sel.value`) and the plot** (seen on a screenshot with the small CSV, and via `sel.value` with the
+  real data),
+- kernel start to last cell: ~68 s in the test harness (first cell with all imports + load: 32 s);
+  peak tab memory ~1.26 GB (Pyodide build on `main`: 45 s, ~1.29 GB, same machine),
+- the old `comm_open` errors still appear in the console (the pyviz extension still tries its own
+  channel) but are harmless once ipywidgets carries the messages.
+
+### The three workarounds xeus needs
+
+1. First, before importing panel: `sys.modules.pop("tornado.gen", None); sys.modules.pop("tornado", None)`
+   (undo emscripten-forge IPython's mock).
+2. Parquet through DuckDB (`duckdb.read_parquet(path).df()`), no pyarrow in the environment.
+3. `pn.extension(comms="ipywidgets")` in the browser.
+
+### Left to do before this branch could replace Pyodide
+
+- Put 1-3 behind `prenoms` helpers so the notebook stays identical locally and in the browser
+  (e.g. `prenoms.setup()` and a DuckDB branch in `load_nat2020`); add `python-duckdb` locally or keep
+  pyarrow there.
+- Run the real notebook end to end, in Firefox too, and check `AutocompleteInput`.
+- Pin local Python to 3.13 if version parity matters (browser: Python 3.13.1, panel 1.8.10,
+  bokeh 3.9.2, pandas 3.1.0, numpy 2.5.4).
+- Put `TMPDIR` in the `build-lite` task; check the build in CI.
